@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -6,28 +7,25 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: Align(
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(24.0),
-                child: LoginForm(),
-              )
-            ],
-          )
-        )
-    );
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: LoginForm(),
+                )
+              ],
+            )));
   }
 }
 
-class LoginForm extends StatefulWidget{
+class LoginForm extends StatefulWidget {
   @override
   LoginFormState createState() {
     return LoginFormState();
@@ -35,7 +33,6 @@ class LoginForm extends StatefulWidget{
 }
 
 class LoginFormState extends State<LoginForm> {
-
   final _emailController = TextEditingController();
   final _pwdController = TextEditingController();
 
@@ -48,123 +45,136 @@ class LoginFormState extends State<LoginForm> {
   }
 
   onLogin() {
-    final String email = _emailController.text;
-    final String pwd = _pwdController.text;
-    // TODO: attempt login
+    if (_formKey.currentState.validate()) {
+      final String email = _emailController.text;
+      final String password = _pwdController.text;
+      Future<LoginResponse> response = login(email, password);
+      response.then((LoginResponse loginResponse) {
+        //TODO: validate response
+        Navigator.pushNamed(context, '/homePage');
+      }).catchError((exception) {
+        print(exception.toString());
+      });
+    }
   }
 
   onSignUp() {
     Navigator.pushNamed(context, '/signup');
   }
+
   final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Form(
         key: _formKey,
-        child: Column(
-            children: <Widget> [
-              Column(
-                  children: <Widget> [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value.isEmpty) {
-                            return 'Please enter some text';
-                          }
-                          return null;
-                        },
-                        controller: _emailController,
-                        autofocus: true,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: "Email",
-                          hintText: "email@example.com",
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color:  Theme.of(context).accentColor, width: 2.0)
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
-                      child: TextFormField(
-                        controller: _pwdController,
-                        obscureText: true,
-                        onEditingComplete: onLogin,
-                        decoration: InputDecoration(
-                          labelText: "Password",
-                          hintText: "Password",
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color:  Theme.of(context).accentColor, width: 2.0)
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value.isEmpty) {
-                            return 'Please enter some text';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ]
-              ),
-              Container(
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child:RaisedButton(
-                        child: Text("Login"),
-                        onPressed: onLogin,
-                        color: Theme
-                            .of(context)
-                            .primaryColor,
-                        textColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
-                      ),
-                    )
-                  ],
+        child: Column(children: <Widget>[
+          Column(children: <Widget>[
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: TextFormField(
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Please enter email';
+                  } else if (!RegExp(
+                          r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                      .hasMatch(value)) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+                controller: _emailController,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  hintText: "email@example.com",
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Theme.of(context).accentColor, width: 2.0)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor, width: 2.0)),
+                  focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red, width: 2.0)),
+                  errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red, width: 2.0)),
                 ),
-                margin: EdgeInsets.only(bottom: 16.0),
               ),
-              Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: InkWell(
-                        child: Text("Create Account",
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: TextFormField(
+                controller: _pwdController,
+                obscureText: true,
+                onEditingComplete: onLogin,
+                decoration: InputDecoration(
+                  labelText: "Password",
+                  hintText: "Password",
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Theme.of(context).accentColor, width: 2.0)),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor, width: 2.0)),
+                  errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red, width: 2.0)),
+                  focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red, width: 2.0)),
+                ),
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Please don\'t leave this blank';
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ]),
+          Container(
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: RaisedButton(
+                    child: Text("Login"),
+                    onPressed: onLogin,
+                    color: Theme.of(context).primaryColor,
+                    textColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24.0)),
+                  ),
+                )
+              ],
+            ),
+            margin: EdgeInsets.only(bottom: 16.0),
+          ),
+          Row(children: <Widget>[
+            Expanded(
+              child: InkWell(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Create Account",
+                    style: TextStyle(fontSize: 12, color: Color(0xaa242424)),
+                  ),
+                ),
+                onTap: onSignUp,
+              ),
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Forgot Password?",
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xaa242424)
-                          ),
-                        ),
-                        onTap: onSignUp,
-                      ),
-                    ),
-                    Expanded(
-                      child:Align(
-                        alignment: Alignment.centerRight,
-                        child: InkWell(
-                          child: Text("Forgot Password?",
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xaa242424)
-                              )
-                          ),
-                          onTap: onSignUp,
-                        ),
-                      ),
-                    )
-                  ]
+                              fontSize: 12, color: Color(0xaa242424)))),
+                  //TODO: onTap
+                ),
               ),
-            ]
-        )
-    );
+            )
+          ]),
+        ]));
   }
 }

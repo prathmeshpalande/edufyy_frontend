@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -27,16 +28,25 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  onLogin() {
-    final String email = _emailController.text;
-    final String pwd = _pwdController.text;
-    final String name = _nameController.text;
-    final String phone = _phoneController.text;
-    final String referralCode = _referralController.text;
-  }
-
   onRegister() {
-    Navigator.pushNamed(context, '/otp');
+
+    if (_formKey.currentState.validate()) {
+      final String email = _emailController.text;
+      final String pwd = _pwdController.text;
+      final String name = _nameController.text;
+      final String phone = _phoneController.text;
+      final String referralCode = _referralController.text;
+      Future<SignUpResponse> response = signUp(
+          email, pwd, name, phone, referralCode);
+      response
+          .then((SignUpResponse signUpResponse) {
+        //TODO: validate response
+        Navigator.pushNamed(context, '/otp');
+      })
+          .catchError((exception) {
+        print(exception.toString());
+      });
+    }
   }
 
   final _formKey = GlobalKey<FormState>();
@@ -76,6 +86,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
+                                  focusedErrorBorder:  OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
                                 ),
                               ),
                             ),
@@ -90,6 +106,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 },
                                 controller: _pwdController,
                                 autofocus: true,
+                                obscureText: true,
                                 decoration: InputDecoration(
                                   labelText: "Password",
                                   hintText: "Password",
@@ -98,6 +115,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
+                                  focusedErrorBorder:  OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
                                   ),
                                 ),
                               ),
@@ -108,11 +131,14 @@ class _SignUpPageState extends State<SignUpPage> {
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return 'Please don\'t leave this blank';
+                                  } else if(value != _pwdController.text) {
+                                    return 'Passwords don\'t match';
                                   }
                                   return null;
                                 },
                                 controller: _pwd2Controller,
                                 autofocus: true,
+                                obscureText: true,
                                 keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
                                   labelText: "Repeat Password",
@@ -122,6 +148,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
+                                  focusedErrorBorder:  OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
                                   ),
                                 ),
                               ),
@@ -145,6 +177,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
                                   ),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
+                                  focusedErrorBorder:  OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
                                 ),
                               ),
                             ),
@@ -154,6 +192,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return 'Please don\'t leave this blank';
+                                  } else if(value.length != 10) {
+                                    return 'Invalid length';
                                   }
                                   return null;
                                 },
@@ -170,6 +210,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(color:  Theme.of(context).primaryColor, width: 2.0)
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
+                                  ),
+                                  focusedErrorBorder:  OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red, width: 2.0)
                                   ),
                                 ),
                               ),

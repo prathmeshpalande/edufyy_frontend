@@ -1,37 +1,143 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-final String BASE_URL = '192.168.0.11:80/';
+class UrlHelper {
+  static const String BASE_URL = 'http://192.168.0.11:8080/';
 
-class Api {
-  Future<http.Response> get(String path) {
-    return http.get(BASE_URL + path);
+  static String getUrl(String path) {
+    return (BASE_URL + path);
   }
 }
 
 class BasicResponse {
-  final String email;
-  final String password;
-  final String sessionKey;
+  final String responseCode;
+  final String responseMessage;
+  final Map<String, dynamic> responseData;
 
-  BasicResponse({this.email, this.password, this.sessionKey});
+  BasicResponse({this.responseCode, this.responseMessage, this.responseData});
 
-  factory BasicResponse.fromJson(Map<String, dynamic> json) {
+  factory BasicResponse.from(Map<String, dynamic> json) {
     return BasicResponse(
-      email: json['email'],
-      password: json['password'],
-      sessionKey: json['session_key']
+      responseCode: json['responseCode'].toString(),
+      responseMessage: json['responseMessage'],
+      responseData: json
     );
   }
 }
 
-Future<BasicResponse> fetch(String path) async {
+class LoginResponse {
+  final bool isSuccessful;
+  final String sessionKey;
+
+  LoginResponse({this.isSuccessful, this.sessionKey});
+
+  factory LoginResponse.from(BasicResponse response) {
+    print(response.responseData.toString());
+    return LoginResponse(
+        isSuccessful: (response.responseCode == '1'),
+        sessionKey: response.responseData['sessionKey'].toString()
+    );
+  }
+}
+
+class SignUpResponse {
+  final bool isSuccessful;
+  final String sessionKey;
+
+  SignUpResponse({this.isSuccessful, this.sessionKey});
+
+  factory SignUpResponse.from(BasicResponse response) {
+    print(response.responseData.toString());
+    return SignUpResponse(
+        isSuccessful: (response.responseCode == '1'),
+        sessionKey: response.responseData['sessionKey'].toString()
+    );
+  }
+}
+
+class OTPResponse {
+  final bool isSuccessful;
+  final String sessionKey;
+
+  OTPResponse({this.isSuccessful, this.sessionKey});
+
+  factory OTPResponse.from(BasicResponse response) {
+    print(response.responseData.toString());
+    return OTPResponse(
+        isSuccessful: (response.responseCode == '1'),
+        sessionKey: response.responseData['sessionKey'].toString()
+    );
+  }
+}
+
+Future<LoginResponse> login(String email, String password) async {
+  Map<String, String> headers = {"Content-type": "application/json"};
+  Map<String, String> body = {
+    "email": email,
+    "password": password
+  };
+
   final response =
-  await http.get(BASE_URL + path);
+  await http.post(UrlHelper.getUrl("login"),
+      headers: headers,
+      body: json.encode(body)
+  );
 
   if (response.statusCode == 200) {
     // If server returns an OK response, parse the JSON.
-    return BasicResponse.fromJson(json.decode(response.body));
+    return LoginResponse.from(
+      BasicResponse.from(json.decode(response.body))
+    );
+  } else {
+    // If that response was not OK, throw an error.
+    throw Exception('Failed to load response');
+  }
+}
+
+Future<SignUpResponse> signUp(String email, String password, String name, String phone, String referralCode) async {
+  Map<String, String> headers = {"Content-type": "application/json"};
+  Map<String, String> body = {
+    "email": email,
+    "password": password,
+    "source": referralCode,
+    "name": name,
+    "phone": phone
+  };
+
+  final response =
+  await http.post(UrlHelper.getUrl("signup"),
+      headers: headers,
+      body: json.encode(body)
+  );
+
+  if (response.statusCode == 200) {
+    // If server returns an OK response, parse the JSON.
+    return SignUpResponse.from(
+        BasicResponse.from(json.decode(response.body))
+    );
+  } else {
+    // If that response was not OK, throw an error.
+    throw Exception('Failed to load response');
+  }
+}
+
+Future<OTPResponse> otp(String otp) async {
+  Map<String, String> headers = {"Content-type": "application/json"};
+  Map<String, String> body = {
+    "otp": otp
+  };
+
+  final response =
+  await http.post(UrlHelper.getUrl("otp"),
+      headers: headers,
+      body: json.encode(body)
+  );
+
+  if (response.statusCode == 200) {
+    // If server returns an OK response, parse the JSON.
+    return OTPResponse.from(
+        BasicResponse.from(json.decode(response.body))
+    );
   } else {
     // If that response was not OK, throw an error.
     throw Exception('Failed to load response');
