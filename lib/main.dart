@@ -1,28 +1,35 @@
-import 'package:Edufyy/otp.dart';
+import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'signup.dart';
-import 'home.dart';
 
-void main() => runApp(EdufyyApp());
+import 'config/application.dart';
+import 'config/routes/configuration.dart';
 
-class EdufyyApp extends StatelessWidget {
+class AppComponent extends StatefulWidget {
+  @override
+  State createState() {
+    return AppComponentState();
+  }
+}
+
+class AppComponentState extends State<AppComponent> {
+  AppComponentState() {
+    final router = Router();
+    Routes.configureRoutes(router);
+    Application.router = router;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final app = MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,
         accentColor: Colors.orangeAccent,
       ),
-    initialRoute: '/',
-    routes: {
-      '/': (context) => LoginPage(),
-      '/signup': (context) => SignUpPage(),
-      '/otp': (context) => OtpPage(),
-      '/homePage': (context) => HomePage(),
-    }
+      onGenerateRoute: Application.router.generator,
     );
+
+    return app;
   }
 }
 
-
+void main() => runApp(AppComponent());

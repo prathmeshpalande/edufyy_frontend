@@ -1,4 +1,9 @@
+import 'dart:convert';
+
+import 'package:Edufyy/config/routes/arguments.dart';
+import 'package:Edufyy/config/storage.dart';
 import 'package:flutter/material.dart';
+
 import 'api.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -7,7 +12,6 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-
   final _emailController = TextEditingController();
   final _pwdController = TextEditingController();
   final _pwd2Controller = TextEditingController();
@@ -29,7 +33,6 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   onRegister() {
-
     if (_formKey.currentState.validate()) {
       final String email = _emailController.text;
       final String pwd = _pwdController.text;
@@ -40,8 +43,14 @@ class _SignUpPageState extends State<SignUpPage> {
           email, pwd, name, phone, referralCode);
       response
           .then((SignUpResponse signUpResponse) {
-        //TODO: validate response
-        Navigator.pushNamed(context, '/otp');
+        if (signUpResponse.isSuccessful) {
+          FilesHelper("sessionKey").writeContent(
+              jsonEncode({"sessionKey": signUpResponse.sessionKey}));
+          Navigator.pushNamed(context, '/otp',
+              arguments: RouteArguments(signUpResponse.otp));
+        } else {
+          //TODO: handle unsuccessful otp attempt
+        }
       })
           .catchError((exception) {
         print(exception.toString());

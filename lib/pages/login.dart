@@ -1,4 +1,7 @@
+import 'package:Edufyy/config/application.dart';
+import 'package:Edufyy/config/storage.dart';
 import 'package:flutter/material.dart';
+
 import 'api.dart';
 
 class LoginPage extends StatefulWidget {
@@ -44,17 +47,19 @@ class LoginFormState extends State<LoginForm> {
     super.dispose();
   }
 
-  onLogin() {
+  onLogin() async {
     if (_formKey.currentState.validate()) {
       final String email = _emailController.text;
       final String password = _pwdController.text;
-      Future<LoginResponse> response = login(email, password);
-      response.then((LoginResponse loginResponse) {
-        //TODO: validate response
-        Navigator.pushNamed(context, '/homePage');
-      }).catchError((exception) {
-        print(exception.toString());
-      });
+
+      LoginResponse loginResponse = await login(email, password);
+      if (loginResponse.isSuccessful) {
+        await FilesHelper("sessionKey").writeContent(loginResponse.sessionKey);
+        print('login page sessionKey = ${loginResponse.sessionKey}');
+        Application.router.navigateTo(context, '/subjects');
+      }
+    } else {
+      //TODO: handle unsuccessful login attempt
     }
   }
 
@@ -77,7 +82,7 @@ class LoginFormState extends State<LoginForm> {
                   if (value.isEmpty) {
                     return 'Please enter email';
                   } else if (!RegExp(
-                          r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
                       .hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
@@ -150,7 +155,7 @@ class LoginFormState extends State<LoginForm> {
           ),
           Row(children: <Widget>[
             Expanded(
-              child: InkWell(
+              child: GestureDetector(
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text(
@@ -164,7 +169,7 @@ class LoginFormState extends State<LoginForm> {
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: InkWell(
+                child: GestureDetector(
                   child: Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text("Forgot Password?",
