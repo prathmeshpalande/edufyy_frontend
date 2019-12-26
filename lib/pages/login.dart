@@ -10,9 +10,55 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  TextEditingController _ipAddressController;
+
+  _LoginPageState() {
+    _ipAddressController = TextEditingController();
+  }
+
+  showAlertDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      title: Text("Server IP address and port"),
+      content: TextField(
+        controller: _ipAddressController,
+      ),
+      actions: [
+        FlatButton(
+          child: Text("OK"),
+          onPressed: () => UrlHelper().setUrl(_ipAddressController.text),
+        )
+      ],
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(
+          actions: <Widget>[
+            PopupMenuButton<String>(
+              onSelected: (String s) {
+                showAlertDialog(context);
+              },
+              itemBuilder: (BuildContext context) {
+                List<String> choices = ['IP address'];
+                return choices.map((String s) {
+                  return PopupMenuItem<String>(
+                    value: s,
+                    child: Text(s),
+                  );
+                }).toList();
+              },
+            )
+          ],
+        ),
         body: Align(
             alignment: Alignment.center,
             child: Column(

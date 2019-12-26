@@ -3,10 +3,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class UrlHelper {
-  static const String BASE_URL = 'http://192.168.0.11:8080/';
+  static final UrlHelper _singleton = UrlHelper._internal();
 
-  static String getUrl(String path) {
-    return (BASE_URL + path);
+  String url;
+
+  factory UrlHelper() {
+    return _singleton;
+  }
+
+  UrlHelper._internal();
+
+  setUrl(String url) {
+    this.url = 'http://' + url + '/';
+  }
+
+  String getUrl(String path) {
+    return (this.url + path);
   }
 }
 
@@ -72,7 +84,7 @@ Future<LoginResponse> login(String email, String password) async {
   Map<String, String> headers = {"Content-type": "application/json"};
   Map<String, String> body = {"email": email, "password": password};
 
-  final response = await http.post(UrlHelper.getUrl("login"),
+  final response = await http.post(UrlHelper().getUrl("login"),
       headers: headers, body: json.encode(body));
 
   if (response.statusCode == 200) {
@@ -95,7 +107,7 @@ Future<SignUpResponse> signUp(String email, String password, String name,
     "phone": phone
   };
 
-  final response = await http.post(UrlHelper.getUrl("signup"),
+  final response = await http.post(UrlHelper().getUrl("signup"),
       headers: headers, body: json.encode(body));
 
   if (response.statusCode == 200) {
@@ -111,7 +123,7 @@ Future<OTPResponse> otp(String otp) async {
   Map<String, String> headers = {"Content-type": "application/json"};
   Map<String, String> body = {"otp": otp};
 
-  final response = await http.post(UrlHelper.getUrl("otp"),
+  final response = await http.post(UrlHelper().getUrl("otp"),
       headers: headers, body: json.encode(body));
 
   if (response.statusCode == 200) {
@@ -144,7 +156,7 @@ Future<QuestionsResponse> getQuestionsByKey(
     "questionKey": questionKey
   };
 
-  final response = await http.post(UrlHelper.getUrl("get_keys_by_level"),
+  final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
     return QuestionsResponse.from(
@@ -176,7 +188,7 @@ Future<QuestionsResponse> getExam(String sessionKey, String questionKey) async {
     "questionCount": '5'
   };
 
-  final response = await http.post(UrlHelper.getUrl("get_keys_by_level"),
+  final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
     return QuestionsResponse.from(
@@ -217,7 +229,7 @@ Future<QuestionsResponse> submitAnswer(
     "answer": answer
   };
 
-  final response = await http.post(UrlHelper.getUrl("get_keys_by_level"),
+  final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
     return QuestionsResponse.from(
