@@ -21,9 +21,10 @@ class FilesHelper {
     return File('$path/$_fileName');
   }
 
-  Future<void> writeContent(String content) async {
+  Future<bool> writeContent(String content) async {
     final file = await _localFile;
-    file.writeAsString(content);
+    File f = await file.writeAsString(content);
+    return f.exists();
   }
 
   Future<String> readContent() async {

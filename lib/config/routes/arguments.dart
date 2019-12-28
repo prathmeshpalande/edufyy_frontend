@@ -1,5 +1,6 @@
 class RouteArguments {
-  final String message;
+  final String name;
+  final String key;
 
-  RouteArguments(final this.message);
+  RouteArguments(final this.name, final this.key);
 }

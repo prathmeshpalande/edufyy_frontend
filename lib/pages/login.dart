@@ -1,4 +1,4 @@
-import 'package:Edufyy/config/application.dart';
+import 'package:Edufyy/config/routes/arguments.dart';
 import 'package:Edufyy/config/storage.dart';
 import 'package:flutter/material.dart';
 
@@ -98,14 +98,20 @@ class LoginFormState extends State<LoginForm> {
       final String email = _emailController.text;
       final String password = _pwdController.text;
 
-      LoginResponse loginResponse = await login(email, password);
-      if (loginResponse.isSuccessful) {
-        await FilesHelper("sessionKey").writeContent(loginResponse.sessionKey);
-        print('login page sessionKey = ${loginResponse.sessionKey}');
-        Application.router.navigateTo(context, '/subjects');
+      try {
+        LoginResponse loginResponse = await login(email, password);
+        if (loginResponse.isSuccessful) {
+          await FilesHelper("sessionKey")
+              .writeContent(loginResponse.sessionKey);
+          print(loginResponse.sessionKey);
+          Navigator.pushNamed(context, '/list',
+              arguments: RouteArguments('Subjects', '0'));
+        } else {
+          //TODO: handle unsuccessful login attempt
+        }
+      } on Exception catch (e) {
+        print(e.toString());
       }
-    } else {
-      //TODO: handle unsuccessful login attempt
     }
   }
 
@@ -188,7 +194,7 @@ class LoginFormState extends State<LoginForm> {
                 Expanded(
                   child: RaisedButton(
                     child: Text("Login"),
-                    onPressed: onLogin,
+                    onPressed: () => onLogin(),
                     color: Theme.of(context).primaryColor,
                     textColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -209,7 +215,7 @@ class LoginFormState extends State<LoginForm> {
                     style: TextStyle(fontSize: 12, color: Color(0xaa242424)),
                   ),
                 ),
-                onTap: onSignUp,
+                onTap: () => onSignUp(),
               ),
             ),
             Expanded(

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:Edufyy/config/routes/arguments.dart';
 import 'package:Edufyy/config/storage.dart';
 import 'package:flutter/material.dart';
 
@@ -32,29 +31,24 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  onRegister() {
+  onRegister() async {
     if (_formKey.currentState.validate()) {
       final String email = _emailController.text;
       final String pwd = _pwdController.text;
       final String name = _nameController.text;
       final String phone = _phoneController.text;
       final String referralCode = _referralController.text;
-      Future<SignUpResponse> response = signUp(
-          email, pwd, name, phone, referralCode);
-      response
-          .then((SignUpResponse signUpResponse) {
-        if (signUpResponse.isSuccessful) {
-          FilesHelper("sessionKey").writeContent(
-              jsonEncode({"sessionKey": signUpResponse.sessionKey}));
-          Navigator.pushNamed(context, '/otp',
-              arguments: RouteArguments(signUpResponse.otp));
-        } else {
-          //TODO: handle unsuccessful otp attempt
-        }
-      })
-          .catchError((exception) {
-        print(exception.toString());
-      });
+
+      SignUpResponse signUpResponse =
+          await signUp(email, pwd, name, phone, referralCode);
+      if (signUpResponse.isSuccessful) {
+        FilesHelper("sessionKey").writeContent(
+            jsonEncode({"sessionKey": signUpResponse.sessionKey}));
+        Navigator.pushNamed(context, '/otp',
+            arguments: [signUpResponse.sessionKey, signUpResponse.otp]);
+      } else {
+        //TODO: handle unsuccessful otp attempt
+      }
     }
   }
 

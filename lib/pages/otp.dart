@@ -1,3 +1,4 @@
+import 'package:Edufyy/config/routes/arguments.dart';
 import 'package:flutter/material.dart';
 
 class OtpPage extends StatefulWidget {
@@ -6,18 +7,29 @@ class OtpPage extends StatefulWidget {
 }
 
 class _OtpPageState extends State<OtpPage> {
+
+  List<String> data;
+
   onOtpSubmit(String otp) {
-    //TODO: implement this
-    print(otp);
+    if (otp == data[1])
+      Navigator.pushNamed(
+          context, '/list', arguments: RouteArguments('Subjects', '0'));
+
+    //TODO: handle invalid otp
   }
 
   @override
   Widget build(BuildContext context) {
+    data = ModalRoute
+        .of(context)
+        .settings
+        .arguments;
+
     return Scaffold(
         appBar: AppBar(
           title: Text("Enter OTP"),
         ),
-        body: Container(
+        body: Center(
           child: TextField(
             maxLength: 4,
             maxLengthEnforced: true,
@@ -25,7 +37,7 @@ class _OtpPageState extends State<OtpPage> {
             textAlign: TextAlign.center,
             onSubmitted: (text) => onOtpSubmit(text),
             keyboardType:
-                TextInputType.numberWithOptions(signed: false, decimal: false),
+            TextInputType.numberWithOptions(signed: false, decimal: false),
             decoration: InputDecoration(
               counterText: "",
               focusedBorder: OutlineInputBorder(
