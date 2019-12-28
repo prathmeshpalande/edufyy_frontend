@@ -105,7 +105,7 @@ class LoginFormState extends State<LoginForm> {
               .writeContent(loginResponse.sessionKey);
           print(loginResponse.sessionKey);
           Navigator.pushNamed(context, '/list',
-              arguments: RouteArguments('Subjects', '0'));
+              arguments: RouteArguments('Subjects', '/'));
         } else {
           //TODO: handle unsuccessful login attempt
         }

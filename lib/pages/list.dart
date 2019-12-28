@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:Edufyy/config/routes/arguments.dart';
 import 'package:Edufyy/config/storage.dart';
 import 'package:Edufyy/pages/api.dart';
@@ -85,18 +87,23 @@ class ListState extends State<ListScreen> {
 
     print('in getList() name = ${params.name}; key = ${params.key}');
     QuestionsResponse questionKeyResponse;
+
     questionKeyResponse = await getQuestionsByKey(sessionKey, params.key);
-
     List<ListItem> items = [];
-    questionKeyResponse.data['questionKeys'].forEach((var entry) {
-      print(entry['name']);
-      items.add(
-          ListItem(
-              entry['name'].toString(),
-              entry['questionKey'].toString()));
-    }
-    );
 
+    if (params.key == '/')
+      questionKeyResponse.data['questionKeys'].forEach((var entry) {
+        print(entry['name']);
+        items.add(ListItem(
+            entry['name'].toString(), entry['questionKey'].toString()));
+      });
+    else
+      questionKeyResponse.data['questionKeys'][0]['questionKeys']
+          .forEach((var entry) {
+        print(entry['name']);
+        items.add(ListItem(
+            entry['name'].toString(), entry['questionKey'].toString()));
+      });
 
     return items;
   }
@@ -113,9 +120,17 @@ class ListState extends State<ListScreen> {
   }
 
   @override
+  void initState() {
+    futureList = getList();
+    super.initState();
+  }
+
+  Future<List<ListItem>> futureList;
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<ListItem>>(
-      future: getList(),
+      future: futureList,
       builder: (context, snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
