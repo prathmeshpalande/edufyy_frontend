@@ -91,7 +91,6 @@ Future<LoginResponse> login(String email, String password) async {
     // If server returns an OK response, parse the JSON.
     return LoginResponse.from(BasicResponse.from(json.decode(response.body)));
   } else {
-    // If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }
@@ -111,10 +110,8 @@ Future<SignUpResponse> signUp(String email, String password, String name,
       headers: headers, body: json.encode(body));
 
   if (response.statusCode == 200) {
-    // If server returns an OK response, parse the JSON.
     return SignUpResponse.from(BasicResponse.from(json.decode(response.body)));
   } else {
-    // If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }
@@ -127,10 +124,8 @@ Future<OTPResponse> otp(String otp) async {
       headers: headers, body: json.encode(body));
 
   if (response.statusCode == 200) {
-    // If server returns an OK response, parse the JSON.
     return OTPResponse.from(BasicResponse.from(json.decode(response.body)));
   } else {
-    // If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }
@@ -162,7 +157,6 @@ Future<QuestionsResponse> getQuestionsByKey(
     return QuestionsResponse.from(
         BasicResponse.from(json.decode(response.body)));
   } else {
-// If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }
@@ -180,21 +174,21 @@ class ExamResponse {
   }
 }
 
-Future<QuestionsResponse> getExam(String sessionKey, String questionKey) async {
+Future<ExamResponse> getExam(
+    String sessionKey, String questionKey, String questionCount) async {
   Map<String, String> headers = {"Content-type": "application/json"};
   Map<String, String> body = {
     "sessionKey": sessionKey,
     "questionKey": questionKey,
-    "questionCount": '5'
+    "questionCount": questionCount
   };
 
   final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
-    return QuestionsResponse.from(
+    return ExamResponse.from(
         BasicResponse.from(json.decode(response.body)));
   } else {
-// If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }
@@ -205,15 +199,44 @@ class AnswerSubmitResponse {
   AnswerSubmitResponse({this.isCorrect});
 
   factory AnswerSubmitResponse.from(BasicResponse response) {
-    // print(response.responseData.toString());
     return AnswerSubmitResponse(
       isCorrect: (response.responseCode == '1'),
     );
   }
 }
 
-Future<QuestionsResponse> submitAnswer(
-    String sessionKey,
+Future<ProficiencyResponse> getProficiency(String sessionKey,
+    String questionKey) async {
+  Map<String, String> headers = {"Content-type": "application/json"};
+  Map<String, String> body = {
+    "sessionKey": sessionKey,
+    "questionKey": questionKey,
+  };
+
+  final response = await http.post(UrlHelper().getUrl("get_proficiency"),
+      headers: headers, body: json.encode(body));
+  if (response.statusCode == 200) {
+    return ProficiencyResponse.from(
+        BasicResponse.from(json.decode(response.body)));
+  } else {
+    throw Exception('Failed to load response');
+  }
+}
+
+class ProficiencyResponse {
+  final bool isCorrect;
+  final String proficiency;
+
+  ProficiencyResponse(this.isCorrect, this.proficiency);
+
+  factory ProficiencyResponse.from(BasicResponse response) {
+    return ProficiencyResponse(
+        (response.responseCode == '1'),
+        response.responseData['proficiency'].toString());
+  }
+}
+
+Future<AnswerSubmitResponse> submitAnswer(String sessionKey,
     String questionKey,
     String questionNumber,
     String studentDifficulty,
@@ -232,10 +255,9 @@ Future<QuestionsResponse> submitAnswer(
   final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
-    return QuestionsResponse.from(
+    return AnswerSubmitResponse.from(
         BasicResponse.from(json.decode(response.body)));
   } else {
-// If that response was not OK, throw an error.
     throw Exception('Failed to load response');
   }
 }

@@ -26,7 +26,6 @@ class _ListPageState extends State<ListPage> {
 
 class ListScreen extends StatefulWidget {
   final RouteArguments params;
-
   ListScreen(final this.params);
 
   @override
@@ -36,59 +35,60 @@ class ListScreen extends StatefulWidget {
 }
 
 class ListState extends State<ListScreen> {
-
   final RouteArguments params;
 
-  ListState(final this.params) {
-    print('name = ${params.name}; key = ${params.key}');
-  }
+  ListState(final this.params);
 
   Widget buildList(BuildContext context, List<ListItem> items) {
     return ListView.builder(
         itemCount: items.length,
-        itemBuilder: (context, index) =>
-            Card(
-                margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: GestureDetector(
-                      onTap: () =>
-                          openItem(
-                              context, items[index].name, items[index].key),
-                      child: Column(
+        itemBuilder: (context, index) => Card(
+            margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: GestureDetector(
+                    onTap: () =>
+                        openItem(context, items[index].name, items[index].key),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(items[index].name,
+                          Column(children: <Widget>[
+                            Text(items[index].name,
                                 style: TextStyle(
                                     fontSize: 18.0, color: Colors.black)),
+                            Container(
+                                padding: EdgeInsets.only(top: 16.0),
+                                child: FutureBuilder<String>(
+                                    future: getProficiencyFor(items[index].key),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasError)
+                                        return Text(snapshot.error.toString());
+                                      else
+                                        switch (snapshot.connectionState) {
+                                          case ConnectionState.waiting:
+                                            return Text(
+                                                "Loading proficiency...");
+                                          default:
+                                            return Text(
+                                                'Proficiency: ${snapshot.data}');
+                                        }
+                                    })),
+                          ]),
+                          FlatButton(
+                            child: Text("Take test"),
+                            onPressed: () => startTestFor(
+                                context, items[index].name, items[index].key),
                           ),
-                          Align(
-                            alignment: Alignment.center,
-                            child: Row(
-                              children: <Widget>[
-                                Text("proficiency: TODO"),
-                                FlatButton(
-                                  child: Text("Take test"),
-                                  onPressed: () =>
-                                      startTestFor(context,
-                                          items[index].name, items[index].key),
-                                )
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ))));
+                        ])))));
   }
 
   Future<List<ListItem>> getList() async {
     String sessionKey = await FilesHelper("sessionKey").readContent();
 
     print('in getList() name = ${params.name}; key = ${params.key}');
-    QuestionsResponse questionKeyResponse;
 
-    questionKeyResponse = await getQuestionsByKey(sessionKey, params.key);
+    QuestionsResponse questionKeyResponse =
+    await getQuestionsByKey(sessionKey, params.key);
     List<ListItem> items = [];
 
     if (params.key == '/')
@@ -108,10 +108,17 @@ class ListState extends State<ListScreen> {
     return items;
   }
 
+  Future<String> getProficiencyFor(String questionKey) async {
+    String sessionKey = await FilesHelper("sessionKey").readContent();
+    ProficiencyResponse proficiencyResponse =
+    await getProficiency(sessionKey, questionKey);
+
+    return proficiencyResponse.proficiency;
+  }
+
   openItem(BuildContext context, String name, String key) {
     print('openItem => name = $name; key = $key');
-    Navigator.pushNamed(context, '/list',
-        arguments: RouteArguments(name, key));
+    Navigator.pushNamed(context, '/list', arguments: RouteArguments(name, key));
   }
 
   startTestFor(BuildContext context, String name, String questionKey) {
