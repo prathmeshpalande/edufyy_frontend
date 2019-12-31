@@ -206,7 +206,7 @@ class LoginFormState extends State<LoginForm> {
             margin: EdgeInsets.only(bottom: 16.0),
           ),
           Row(children: <Widget>[
-            Expanded(
+            /*Expanded(
               child: GestureDetector(
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
@@ -217,7 +217,7 @@ class LoginFormState extends State<LoginForm> {
                 ),
                 onTap: () => onSignUp(),
               ),
-            ),
+            ),*/
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
