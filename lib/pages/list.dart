@@ -69,8 +69,21 @@ class ListState extends State<ListScreen> {
                                             return Text(
                                                 "Loading proficiency...");
                                           default:
-                                            return Text(
-                                                'Proficiency: ${snapshot.data}');
+                                            return RichText(
+                                                text: TextSpan(
+                                                    children: <TextSpan>[
+                                                  TextSpan(
+                                                      text: 'Proficiency: ',
+                                                      style: TextStyle(
+                                                          color: Colors.black)),
+                                                  TextSpan(
+                                                      text: snapshot.data,
+                                                      style: TextStyle(
+                                                          color: getProficiencyColor(
+                                                              double.parse(
+                                                                  snapshot
+                                                                      .data))))
+                                                ]));
                                         }
                                     })),
                           ]),
@@ -108,11 +121,39 @@ class ListState extends State<ListScreen> {
     return items;
   }
 
+  Color getProficiencyColor(double proficiency) {
+    final double t = proficiency * 0.2;
+    final String start = Colors.red.value.toRadixString(16).substring(1);
+    final String middle = Colors.yellowAccent.value.toRadixString(16).substring(
+        1);
+    final String end = Colors.green.value.toRadixString(16).substring(1);
+
+    return t >= 0.5
+        ? _linear(middle, end, (t - 0.5) * 2)
+        : _linear(start, middle, t * 2);
+  }
+
+  Color _linear(String s, String e, double x) {
+    int r = int.parse(_byteLinear(s[1] + s[2], e[1] + e[2], x));
+    int g = int.parse(_byteLinear(s[3] + s[4], e[3] + e[4], x));
+    int b = int.parse(_byteLinear(s[5] + s[6], e[5] + e[6], x));
+    print('$r $g $b');
+    return Color.fromARGB(255, r, g, b);
+  }
+
+  String _byteLinear(String a, String b, double x) {
+    return (((int.parse(a, radix: 16)) * (1 - x) +
+        (((int.parse(b, radix: 16)) * x))))
+        .toInt()
+        .toString();
+  }
+
   Future<String> getProficiencyFor(String questionKey) async {
     String sessionKey = await FilesHelper("sessionKey").readContent();
     ProficiencyResponse proficiencyResponse =
     await getProficiency(sessionKey, questionKey);
 
+    print(proficiencyResponse.proficiency);
     return proficiencyResponse.proficiency;
   }
 

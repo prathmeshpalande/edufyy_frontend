@@ -163,12 +163,13 @@ Future<QuestionsResponse> getQuestionsByKey(
 
 class ExamResponse {
   final bool isSuccessful;
-  final String data;
+  final List data;
 
   ExamResponse({this.isSuccessful, this.data});
 
   factory ExamResponse.from(BasicResponse response) {
-    final String questions = response.responseData['questions'];
+    final List questions = response.responseData['questions'];
+
     return ExamResponse(
         isSuccessful: (response.responseCode == '1'), data: questions);
   }
@@ -183,7 +184,7 @@ Future<ExamResponse> getExam(
     "questionCount": questionCount
   };
 
-  final response = await http.post(UrlHelper().getUrl("get_keys_by_level"),
+  final response = await http.post(UrlHelper().getUrl("exam"),
       headers: headers, body: json.encode(body));
   if (response.statusCode == 200) {
     return ExamResponse.from(
