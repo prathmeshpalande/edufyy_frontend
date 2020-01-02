@@ -98,22 +98,18 @@ class ListState extends State<ListScreen> {
   Future<List<ListItem>> getList() async {
     String sessionKey = await FilesHelper("sessionKey").readContent();
 
-    print('in getList() name = ${params.name}; key = ${params.key}');
-
     QuestionsResponse questionKeyResponse =
     await getQuestionsByKey(sessionKey, params.key);
     List<ListItem> items = [];
 
     if (params.key == '/')
       questionKeyResponse.data['questionKeys'].forEach((var entry) {
-        print(entry['name']);
         items.add(ListItem(
             entry['name'].toString(), entry['questionKey'].toString()));
       });
     else
       questionKeyResponse.data['questionKeys'][0]['questionKeys']
           .forEach((var entry) {
-        print(entry['name']);
         items.add(ListItem(
             entry['name'].toString(), entry['questionKey'].toString()));
       });
@@ -137,7 +133,6 @@ class ListState extends State<ListScreen> {
     int r = int.parse(_byteLinear(s[1] + s[2], e[1] + e[2], x));
     int g = int.parse(_byteLinear(s[3] + s[4], e[3] + e[4], x));
     int b = int.parse(_byteLinear(s[5] + s[6], e[5] + e[6], x));
-    print('$r $g $b');
     return Color.fromARGB(255, r, g, b);
   }
 
@@ -153,12 +148,10 @@ class ListState extends State<ListScreen> {
     ProficiencyResponse proficiencyResponse =
     await getProficiency(sessionKey, questionKey);
 
-    print(proficiencyResponse.proficiency);
     return proficiencyResponse.proficiency;
   }
 
   openItem(BuildContext context, String name, String key) {
-    print('openItem => name = $name; key = $key');
     Navigator.pushNamed(context, '/list', arguments: RouteArguments(name, key));
   }
 

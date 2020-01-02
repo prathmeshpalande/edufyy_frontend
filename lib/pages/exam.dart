@@ -2,6 +2,9 @@ import 'package:Edufyy/config/routes/arguments.dart';
 import 'package:Edufyy/config/storage.dart';
 import 'package:Edufyy/pages/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 
 class ExamPage extends StatefulWidget {
   @override
@@ -48,26 +51,34 @@ class ExamState extends State<ExamScreen> {
     examDataFuture = getExamData();
     questionIndex = 0;
     _answerOption = AnswerOptions.OPTION_A;
-    _sure = 4.0;
+    _sure = 0.0;
     _diff = 0.0;
-    _proceedButtonText = 'Next';
+    _questionProgress = 0.0;
     super.initState();
   }
 
-  double _diff = 0.0,
-      _sure = 4.0;
+  resetAnswerForm() {
+    _answerOption = AnswerOptions.OPTION_A;
+    _sure = 0.0;
+    _diff = 0.0;
+  }
+
+  IconData _proceedIcon = Icons.arrow_forward_ios;
+  double _questionProgress = 0.0;
+  int maxQuestionIndex;
+  double _diff = 0.0;
+  double _sure = 0.0;
   String studentDifficulty;
   String surety;
-  String _proceedButtonText = 'Next';
 
   AnswerOptions _answerOption;
 
   _onDifficultyChanged(double newValue) {
-    studentDifficulty = newValue.toString();
+    if (newValue != 0.0) studentDifficulty = newValue.toString();
   }
 
   _onSuretyChanged(double newValue) {
-    surety = newValue.toString();
+    if (newValue != 0.0) surety = newValue.toString();
   }
 
   @override
@@ -83,20 +94,22 @@ class ExamState extends State<ExamScreen> {
                 default:
                   return Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text('Question number ' +
-                                  (questionIndex + 1).toString() +
-                                  ' out of 5'),
                               Text('From ' +
                                   snapshot.data[questionIndex]['questionKey']),
-                              Text(snapshot.data[questionIndex]['question'])
+                              Text(
+                                snapshot.data[questionIndex]['question'],
+                                style: TextStyle(fontSize: 24.0),
+                              )
                             ]),
                         buildExamOptionsList(snapshot.data, questionIndex),
                         Column(children: <Widget>[
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
                               Text('Difficulty'),
                               Slider(
@@ -106,9 +119,9 @@ class ExamState extends State<ExamScreen> {
                                 inactiveColor: Theme
                                     .of(context)
                                     .primaryColor,
-                                divisions: 4,
+                                divisions: 5,
                                 min: 0.0,
-                                max: 4.0,
+                                max: 5.0,
                                 onChanged: (double newValue) {
                                   setState(() {
                                     _diff = newValue;
@@ -117,10 +130,11 @@ class ExamState extends State<ExamScreen> {
                                 },
                                 value: _diff,
                               ),
-                              Text(_diff.toString())
+                              Text(_diff == 0.0 ? "Not set" : _diff.toString())
                             ],
                           ),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
                               Text('Surety'),
                               Slider(
@@ -131,8 +145,8 @@ class ExamState extends State<ExamScreen> {
                                       .of(context)
                                       .primaryColor,
                                   min: 0.0,
-                                  max: 4.0,
-                                  divisions: 4,
+                                  max: 5.0,
+                                  divisions: 5,
                                   onChanged: (double newValue) {
                                     setState(() {
                                       _sure = newValue;
@@ -140,18 +154,44 @@ class ExamState extends State<ExamScreen> {
                                     _onSuretyChanged(newValue);
                                   },
                                   value: _sure),
-                              Text(_sure.toString())
+                              Text(_sure == 0.0 ? "Not set" : _sure.toString())
                             ],
                           )
                         ]),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        Column(
                           children: <Widget>[
-                            FlatButton(
-                                color: Theme
-                                    .of(context)
-                                    .accentColor,
-                                child: Text(_proceedButtonText),
+                            LinearPercentIndicator(
+                              lineHeight: 16.0,
+                              percent: _questionProgress,
+                              animateFromLastPercent: true,
+                              backgroundColor: Colors.black12,
+                              progressColor: Theme
+                                  .of(context)
+                                  .primaryColor,
+                            ),
+                            Container(
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.symmetric(vertical: 12.0),
+                                child: Text(
+                                    '${questionIndex + 1} / ${maxQuestionIndex +
+                                        1}'))
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            MaterialButton(
+                              child: Icon(Icons.arrow_back_ios,
+                                  color: Theme
+                                      .of(context)
+                                      .primaryColor),
+                              onPressed: () => _previousQuestion(),
+                            ),
+                            MaterialButton(
+                                child: Icon(_proceedIcon,
+                                    color: Theme
+                                        .of(context)
+                                        .primaryColor),
                                 onPressed: () {
                                   String answer;
                                   switch (_answerOption) {
@@ -181,10 +221,14 @@ class ExamState extends State<ExamScreen> {
   Future<List> getExamData() async {
     String sessionKey = await FilesHelper("sessionKey").readContent();
     ExamResponse examResponse =
-        await getExam(sessionKey, params.key, 5.toString());
-
+    await getExam(sessionKey, params.key, 5.toString());
     examResponse.data
         .sort((a, b) => a['questionNumber'].compareTo(b['questionNumber']));
+    maxQuestionIndex = examResponse.data.length - 1;
+    if (questionIndex == maxQuestionIndex)
+      setState(() {
+        _proceedIcon = Icons.done;
+      });
     return examResponse.data;
   }
 
@@ -246,10 +290,10 @@ class ExamState extends State<ExamScreen> {
     return answerResponses;
   }
 
-  _selectAnswer(List options, String studentDifficulty,
-      String surety, String answer) {
+  _selectAnswer(List options, String studentDifficulty, String surety,
+      String answer) async {
     if (studentDifficulty == null || surety == null) return;
-    if (questionIndex != 4) {
+    if (questionIndex != maxQuestionIndex) {
       answers.add(Answer(
           options[questionIndex]['questionKey'],
           options[questionIndex]['questionNumber'].toString(),
@@ -258,11 +302,26 @@ class ExamState extends State<ExamScreen> {
           answer));
       setState(() {
         questionIndex++;
-        if (questionIndex == 4)
-          _proceedButtonText = 'Submit';
+        _questionProgress = questionIndex / maxQuestionIndex;
+        if (questionIndex == maxQuestionIndex) _proceedIcon = Icons.done;
+
+        resetAnswerForm();
       });
-    } else
-      _submitAnswers(answers);
+    } else {
+      List<AnswerResponse> answerResponseList = await _submitAnswers(answers);
+    }
+  }
+
+  _previousQuestion() {
+    if (questionIndex != 0) {
+      answers.removeLast();
+      setState(() {
+        questionIndex--;
+        _questionProgress = questionIndex / maxQuestionIndex;
+        _proceedIcon = Icons.arrow_forward_ios;
+        resetAnswerForm();
+      });
+    }
   }
 }
 
