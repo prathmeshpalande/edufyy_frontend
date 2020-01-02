@@ -41,18 +41,33 @@ class ExamState extends State<ExamScreen> {
 
   int questionIndex;
   Future<List> examDataFuture;
-  String sessionKey;
-
-  getSessionKey() async {
-    return await FilesHelper("sessionKey").readContent();
-  }
+  List<Answer> answers = [];
 
   @override
   void initState() {
-    sessionKey = getSessionKey();
     examDataFuture = getExamData();
     questionIndex = 0;
+    _answerOption = AnswerOptions.OPTION_A;
+    _sure = 4.0;
+    _diff = 0.0;
+    _proceedButtonText = 'Next';
     super.initState();
+  }
+
+  double _diff = 0.0,
+      _sure = 4.0;
+  String studentDifficulty;
+  String surety;
+  String _proceedButtonText = 'Next';
+
+  AnswerOptions _answerOption;
+
+  _onDifficultyChanged(double newValue) {
+    studentDifficulty = newValue.toString();
+  }
+
+  _onSuretyChanged(double newValue) {
+    surety = newValue.toString();
   }
 
   @override
@@ -66,21 +81,98 @@ class ExamState extends State<ExamScreen> {
                 case ConnectionState.waiting:
                   return Center(child: CircularProgressIndicator());
                 default:
-                  snapshot.data.sort((a, b) =>
-                      a['questionNumber'].compareTo(b['questionNumber']));
                   return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        Text('Question number ' +
-                            snapshot.data[questionIndex]['questionNumber']
-                                .toString() +
-                            ' out of 5'),
-                        Text('From ' +
-                            snapshot.data[questionIndex]['questionKey']),
-
-                        Text(snapshot.data[questionIndex]['question']),
+                        Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('Question number ' +
+                                  (questionIndex + 1).toString() +
+                                  ' out of 5'),
+                              Text('From ' +
+                                  snapshot.data[questionIndex]['questionKey']),
+                              Text(snapshot.data[questionIndex]['question'])
+                            ]),
                         buildExamOptionsList(snapshot.data, questionIndex),
-                        //Slider()
+                        Column(children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Text('Difficulty'),
+                              Slider(
+                                activeColor: Theme
+                                    .of(context)
+                                    .accentColor,
+                                inactiveColor: Theme
+                                    .of(context)
+                                    .primaryColor,
+                                divisions: 4,
+                                min: 0.0,
+                                max: 4.0,
+                                onChanged: (double newValue) {
+                                  setState(() {
+                                    _diff = newValue;
+                                  });
+                                  _onDifficultyChanged(newValue);
+                                },
+                                value: _diff,
+                              ),
+                              Text(_diff.toString())
+                            ],
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Text('Surety'),
+                              Slider(
+                                  activeColor: Theme
+                                      .of(context)
+                                      .accentColor,
+                                  inactiveColor: Theme
+                                      .of(context)
+                                      .primaryColor,
+                                  min: 0.0,
+                                  max: 4.0,
+                                  divisions: 4,
+                                  onChanged: (double newValue) {
+                                    setState(() {
+                                      _sure = newValue;
+                                    });
+                                    _onSuretyChanged(newValue);
+                                  },
+                                  value: _sure),
+                              Text(_sure.toString())
+                            ],
+                          )
+                        ]),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            FlatButton(
+                                color: Theme
+                                    .of(context)
+                                    .accentColor,
+                                child: Text(_proceedButtonText),
+                                onPressed: () {
+                                  String answer;
+                                  switch (_answerOption) {
+                                    case AnswerOptions.OPTION_A:
+                                      answer = 'A';
+                                      break;
+                                    case AnswerOptions.OPTION_B:
+                                      answer = 'B';
+                                      break;
+                                    case AnswerOptions.OPTION_C:
+                                      answer = 'C';
+                                      break;
+                                    case AnswerOptions.OPTION_D:
+                                      answer = 'D';
+                                      break;
+                                  }
+                                  _selectAnswer(snapshot.data,
+                                      studentDifficulty, surety, answer);
+                                })
+                          ],
+                        )
                       ]);
               }
             }));
@@ -91,43 +183,110 @@ class ExamState extends State<ExamScreen> {
     ExamResponse examResponse =
         await getExam(sessionKey, params.key, 5.toString());
 
-    print(examResponse.data);
+    examResponse.data
+        .sort((a, b) => a['questionNumber'].compareTo(b['questionNumber']));
     return examResponse.data;
   }
 
   Widget buildExamOptionsList(List options, int questionIndex) {
-    return ListView(shrinkWrap: true, children: <Widget>[
-      Card(
-          child: GestureDetector(
-        child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(options[questionIndex]['optionA'])),
-      )),
-      Card(
-        child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(options[questionIndex]['optionB'])),
-      ),
-      Card(
-        child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(options[questionIndex]['optionC'])),
-      ),
-      Card(
-        child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(options[questionIndex]['optionD'])),
-      ),
+    return Column(children: <Widget>[
+      RadioListTile(
+          value: AnswerOptions.OPTION_A,
+          title: Text(options[questionIndex]['optionA']),
+          groupValue: _answerOption,
+          onChanged: (AnswerOptions option) {
+            setState(() {
+              _answerOption = option;
+            });
+          }),
+      RadioListTile(
+          value: AnswerOptions.OPTION_B,
+          title: Text(options[questionIndex]['optionB']),
+          groupValue: _answerOption,
+          onChanged: (AnswerOptions option) {
+            setState(() {
+              _answerOption = option;
+            });
+          }),
+      RadioListTile(
+          value: AnswerOptions.OPTION_C,
+          title: Text(options[questionIndex]['optionC']),
+          groupValue: _answerOption,
+          onChanged: (AnswerOptions option) {
+            setState(() {
+              _answerOption = option;
+            });
+          }),
+      RadioListTile(
+          value: AnswerOptions.OPTION_D,
+          title: Text(options[questionIndex]['optionD']),
+          groupValue: _answerOption,
+          onChanged: (AnswerOptions option) {
+            setState(() {
+              _answerOption = option;
+            });
+          })
     ]);
   }
 
-  _submitAnswer(String questionKey, String questionNumber,
-      String studentDifficulty, String surety, String answer) async {
-    AnswerSubmitResponse answerSubmitResponse = await submitAnswer(sessionKey,
-        questionKey, questionNumber, studentDifficulty, surety, answer);
+  Future<List<AnswerResponse>> _submitAnswers(List<Answer> answers) async {
+    String sessionKey = await FilesHelper('sessionKey').readContent();
+    List<AnswerResponse> answerResponses = [];
+    for (Answer a in answers) {
+      AnswerSubmitResponse answerSubmitResponse = await submitAnswer(
+          sessionKey,
+          a.questionKey,
+          a.questionNumber,
+          a.studentDifficulty,
+          a.surety,
+          a.answer);
+      answerResponses.add(
+          AnswerResponse(answerSubmitResponse.isCorrect, a.questionNumber));
+    }
+    return answerResponses;
   }
 
-  _selectAnswer(List options, int questionIndex) {
-    //TODO: do something
+  _selectAnswer(List options, String studentDifficulty,
+      String surety, String answer) {
+    if (studentDifficulty == null || surety == null) return;
+    if (questionIndex != 4) {
+      answers.add(Answer(
+          options[questionIndex]['questionKey'],
+          options[questionIndex]['questionNumber'].toString(),
+          studentDifficulty,
+          surety,
+          answer));
+      setState(() {
+        questionIndex++;
+        if (questionIndex == 4)
+          _proceedButtonText = 'Submit';
+      });
+    } else
+      _submitAnswers(answers);
   }
+}
+
+class Answer {
+  final String questionKey;
+  final String questionNumber;
+  final String studentDifficulty;
+  final String surety;
+  final String answer;
+
+  Answer(final this.questionKey, final this.questionNumber,
+      final this.studentDifficulty, final this.surety, final this.answer);
+}
+
+class AnswerResponse {
+  final bool isCorrect;
+  final String questionNumber;
+
+  AnswerResponse(final this.isCorrect, final this.questionNumber);
+}
+
+enum AnswerOptions {
+  OPTION_A,
+  OPTION_B,
+  OPTION_C,
+  OPTION_D,
 }
